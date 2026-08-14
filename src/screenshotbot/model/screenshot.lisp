@@ -247,7 +247,7 @@
             (t
              (apply
               #'ensure-screenshot-key
-              (remove-from-plist args :image))))))
+              (remove-from-plist args :image :key))))))
     (make-instance 'lite-screenshot
                    :screenshot-key screenshot-key
                    :image-oid
