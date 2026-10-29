@@ -438,11 +438,14 @@ In original bknr.datastore:
        #'clear-slot-indices
        (closer-mop:class-slots class)))))
 
-(defun read-raft-config ()
+(defun warn-if-raft-config ()
+  "We never evaluate raft-config.lisp: running code from the writable
+object-store lets anyone who can write to the store run code at
+startup. If one shows up, log loudly so it gets investigated."
   (let ((raft-config (path:catfile (object-store) "raft-config.lisp")))
     (when (path:-e raft-config)
-      (read-from-string
-       (uiop:read-file-string raft-config)))))
+      (log:warn "Ignoring unexpected ~a, this file is never evaluated. Investigate how it got there."
+                raft-config))))
 
 (defun make-default-store (&rest args)
   (apply #'make-instance
@@ -453,12 +456,8 @@ In original bknr.datastore:
            :subsystems (store-subsystems)))))
 
 (defun prepare-store ()
-  (let ((raft-config (read-raft-config)))
-    (cond
-      (raft-config
-       (eval raft-config))
-      (t
-       (make-default-store 'safe-mp-store))))
+  (warn-if-raft-config)
+  (make-default-store 'safe-mp-store)
   (dispatch-datastore-hooks))
 
 (defun verify-store (&key (callback (lambda ())))
@@ -469,14 +468,9 @@ In original bknr.datastore:
         (copy-directory:copy (path:catdir store-dir "current/")
                              out-current)
         (assert (path:-d out-current))
-        (let ((raft-config (read-raft-config)))
-          (cond
-            (raft-config
-             (error "verify unimplemented yet."))
-            (t
-             (make-instance 'safe-mp-store
-                            :directory dir
-                            :subsystems (store-subsystems)))))
+        (make-instance 'safe-mp-store
+                       :directory dir
+                       :subsystems (store-subsystems))
         (log:info "Got ~d objects" (length (bknr.datastore:all-store-objects)))
         (funcall callback)))))
 
