@@ -14,6 +14,7 @@
                :util/request
                :util.store
                :clavier
+               :cl-json
                :oidc)
   :components ((:file "impersonation")
                (:file "roles-auth-provider")

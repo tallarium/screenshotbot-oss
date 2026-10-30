@@ -17,11 +17,15 @@
   (:import-from #:it.bese.fiveam
                 #:pass
                 #:fail
+                #:finishes
+                #:signals
                 #:def-fixture
                 #:is
                 #:test
                 #:with-fixture)
   (:import-from #:oidc/oidc
+                #:authentication-error
+                #:verify-userinfo
                 #:after-authentication)
   (:import-from #:screenshotbot/login/oidc
                 #:pushfront
@@ -198,3 +202,25 @@
     (pushfront :foo res)
     (assert-that res
                  (contains :foo :car :bar :foo))))
+
+(defun user-info-with-features (&rest features)
+  (json:decode-json-from-string
+   (format nil "{\"https://example.com/claims\": {\"features\": [~{\"~a\"~^, ~}]}}"
+           features)))
+
+(test verify-userinfo-without-required-feature
+  (finishes
+    (verify-userinfo (make-instance 'oidc-provider) (user-info-with-features))))
+
+(test verify-userinfo-with-required-feature
+  (let ((auth (make-instance 'oidc-provider
+                             :features-claim '("https://example.com/claims" "features")
+                             :required-feature "screenshotbot")))
+    (finishes
+      (verify-userinfo auth (user-info-with-features "other_feature" "screenshotbot")))
+    (signals authentication-error
+      (verify-userinfo auth (user-info-with-features "other_feature")))
+    (signals authentication-error
+      (verify-userinfo auth (user-info-with-features)))
+    (signals authentication-error
+      (verify-userinfo auth nil))))

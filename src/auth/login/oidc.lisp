@@ -24,6 +24,8 @@
                 #:nibble)
   (:import-from #:oidc/oidc
                 #:after-authentication
+                #:authentication-error
+                #:verify-userinfo
                 #:logout-link
                 #:make-oidc-auth-link
                 #:oidc)
@@ -76,9 +78,37 @@
                :accessor oidc-provider-identifier)
    (expiration-seconds :initarg :expiration-seconds
                        :initform nil
-                       :reader expiration-seconds))
+                       :reader expiration-seconds)
+   (features-claim :initarg :features-claim
+                   :initform nil
+                   :reader features-claim)
+   (required-feature :initarg :required-feature
+                     :initform nil
+                     :reader required-feature))
   (:default-initargs
    :oauth-name "Generic OIDC"))
+
+(defun claim-value (user-info path)
+  "Find the claim at PATH (a list of JSON key names) in USER-INFO, as
+decoded by cl-json."
+  (reduce (lambda (obj key)
+            (when (listp obj)
+              (cdr (assoc (json:json-intern
+                           (funcall json:*json-identifier-name-to-lisp* key))
+                          obj))))
+          path
+          :initial-value user-info))
+
+(defmethod verify-userinfo ((auth oidc-provider) user-info)
+  (when (features-claim auth)
+    (let ((features (claim-value user-info (features-claim auth))))
+      (unless (and (listp features)
+                   (member (required-feature auth) features :test #'equal))
+        (log:info "Rejecting login for ~a: missing required feature ~s"
+                  (cdr (assoc :email user-info))
+                  (required-feature auth))
+        (error 'authentication-error
+               :message "You don't have access to this Screenshotbot instance. Please ask an administrator to grant you access.")))))
 
 (defindex +user-id-index+
   'fset-set-index
