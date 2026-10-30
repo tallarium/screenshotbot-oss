@@ -66,15 +66,18 @@
 
 (register-tdrhq "esrap" "96f4d59905a7ffdcf9073572c748883b558db0d2")
 
-;; TODO: automatically generate hashes
+;; Pinned to commit hashes (rather than master/main) so that an
+;; existing checkout doesn't need to be fetched again on startup.
 #+(or screenshotbot-oss eaase-oss)
 (progn
-  (quick-patch:register "https://github.com/moderninterpreters/markup" "master")
-  (quick-patch:register "https://github.com/moderninterpreters/cl-sentry-client" "master")
-  (register-tdrhq "easy-macros" "main")
-  (register-tdrhq "fiveam-matchers" "master")
-  (register-tdrhq "cl-unix-sockets" "master")
-  (register-tdrhq "bknr.cluster" "main"))
+  (quick-patch:register "https://github.com/moderninterpreters/markup"
+                        "9da896f2150547eba9fa95e3a724dfcecf45f390")
+  (quick-patch:register "https://github.com/moderninterpreters/cl-sentry-client"
+                        "2abd28fab457dc02238e008617ff47b414499451")
+  (register-tdrhq "easy-macros" "6da310d7474e8ea22ad033ac5bc1a1f586a141ee")
+  (register-tdrhq "fiveam-matchers" "b402855c970d20c4834e2235397ba8d09d1e3337")
+  (register-tdrhq "cl-unix-sockets" "9d1ca3f12df5f7bd304b0d08a0c405dc1c032f37")
+  (register-tdrhq "bknr.cluster" "71492b33223018e585478ef62bdc944cbd697ee4"))
 
 ;; https://github.com/slburson/fset/issues/112
 (quick-patch:register "https://github.com/slburson/fset"
