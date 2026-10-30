@@ -225,17 +225,18 @@ object on prod, other screenshotbot.io will reject it.")))
         (let ((user-info
                 (user-info auth token)))
           (log:debug "Got user info ~S" user-info)
-          (verify-userinfo auth user-info)
           (handler-case
-              (after-authentication
-               auth
-               :user-id (assoc-value user-info :sub)
-               :email (assoc-value user-info :email)
-               :full-name (assoc-value user-info :name)
-               :avatar (assoc-value user-info :picture)
-               ;; We don't save the token, but in some cases, we need
-               ;; the token to fetch the avatar.
-               :token token)
+              (progn
+                (verify-userinfo auth user-info)
+                (after-authentication
+                 auth
+                 :user-id (assoc-value user-info :sub)
+                 :email (assoc-value user-info :email)
+                 :full-name (assoc-value user-info :name)
+                 :avatar (assoc-value user-info :picture)
+                 ;; We don't save the token, but in some cases, we need
+                 ;; the token to fetch the avatar.
+                 :token token))
             (authentication-error (e)
               (error-authenticating (authentication-error-message e)))))))
      (t
